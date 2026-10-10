@@ -1,13 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 
 class Program
 {
-    static HttpClient httpClient = new HttpClient();
     static async Task Main()
     {
+        int localPort = 8889;
+        int port = 8888;
+        IPAddress iPAddress = IPAddress.Parse("127.0.0.1");
+
+        UdpClient client = new UdpClient(localPort);
+
+        UdpClient sender = new UdpClient();
+
         bool boolSwitch = true;
         Console.WriteLine("Enter exit to exit");
         while (boolSwitch)
@@ -21,16 +29,14 @@ class Program
                     boolSwitch = false;
                     break;
                 default:
-                    StringContent content = new StringContent(command);
-                    using (var response = await httpClient.PostAsync("https://localhost:7138/", content))
-                    {
-                        string responseText = await response.Content.ReadAsStringAsync();
-                        Console.WriteLine(responseText);
-                        break;
-                    }
+                    byte[] data = Encoding.UTF8.GetBytes(command);
+                    await sender.SendAsync(data, new IPEndPoint(iPAddress, port));
+                    string message = Encoding.UTF8.GetString((await client.ReceiveAsync()).Buffer);
+                    Console.WriteLine(message);
+                    break;
             }
 
-            
+
         }
     }
 }
